@@ -2,20 +2,4 @@
 - hosts: all
   roles:
   - docker
-#  - common
-  # OpenConnect must be set up before L2TP/IPsec in order to avoid
-  # compilation issues.
-#  - openconnect
-#  - l2tp-ipsec
-#  - openvpn
-#  - stunnel
-#  - shadowsocks
-#  - ssh
-#  - tinyproxy
-#  - tor-bridge
-#  - sslh
-#  - monit
-#  - ufw
-#  - streisand-mirror
-#  - streisand-gateway
 

@@ -1,6 +1,76 @@
 ---
 
+- name: apt-get update
+  apt: update_cache=yes
+
+- name: Installing ufw
+  apt: name=ufw state=present
+  notify:
+    - restart ufw
+
+- name: Install deps
+  apt: name={{ item }}  state=present
+  with_items:
+    - apt-transport-https
+    - python-pip
+    - build-essential
+    - nginx
+    - letsencrypt
+
+- name: install linux linux-headers
+  action: shell apt-get install -y linux-headers-$(uname -r)
+
 - name: Install docker
-  apt:
-    name: docker.io
+  apt: name=docker.io state=present
+  notify:
+    - restart docker
+
+- name: Installing Python depencies
+  pip: name=docker-py
+
+- name: config ufw - allow ssh
+  ufw: rule=allow port=22 proto=tcp
+  notify:
+    - restart ufw
+
+- name: Checkout Whose turn is it anyway
+  git: repo=https://github.com/apollux/whose_turn_is_it_anyway.git dest=./whose_turn_is_it_anyway
+
+- name: Build docker image
+  docker_image:
+    path: ./whose_turn_is_it_anyway
+    name: whose_turn_is_it_anyway
+    repository: whose_turn_is_it_anyway
     state: present
+  tags:
+    - docker
+
+- name: Start container
+  docker_container:
+    name: whose_turn_is_it_anyway
+    state: started
+    image: whose_turn_is_it_anyway
+    ports:
+      - "127.0.0.1:5000:5000"
+    env:
+        WHOSE_TURN_IS_IT_ANYWAY_ENV: prod
+        WHOSE_TURN_IS_IT_ANYWAY_SECRET: M0RGdQJLr/alXd3u7+DJ0tYO09ZXWvpEP1aiq4k6k/fIzBBLv3+dnw==
+  tags:
+    - docker
+
+- name: Configure Nginx
+  copy: src=whose_turn_is_it_anyway.sites-available dest=/etc/nginx/sites-available/whose_turn_is_it_anyway owner=www-data group=www-data
+
+- name: Setup automatic certificate renewal with certbot
+  cron: name=Certbot special_time=daily job="letsencrypt renew --agree-tos"
+  notify:
+   - restart nginx
+
+- name: config ufw - allow http(s)
+  ufw: rule=allow port={{ item }} proto=tcp
+  notify:
+    - restart ufw
+  with_items:
+    - 80
+    - 443
+
