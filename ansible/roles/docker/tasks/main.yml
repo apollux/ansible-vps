@@ -17,8 +17,11 @@
     - nginx
     - letsencrypt
 
-- name: install linux linux-headers
-  action: shell apt-get install -y linux-headers-$(uname -r)
+- name: install linux-headers
+  shell: apt-get install -y linux-headers-$(uname -r)
+  register: header_result
+  failed_when: header_result.rc != 0
+  changed_when: header_result.rc == 0 and ("already the newest version" not in header_result.stdout)
 
 - name: Install docker
   apt: name=docker.io state=present
