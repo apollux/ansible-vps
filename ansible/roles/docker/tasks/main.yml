@@ -48,6 +48,19 @@
   tags:
     - docker
 
+- name: Setup app directory structure
+  file: path=/var/app/{{ item }} state=directory
+  with_items:
+    - app
+    - config
+  tags:
+    - docker
+
+- name: configure docker env
+  template: src=env dest=/var/app/config/ force=no
+  tags:
+    - docker
+
 - name: Start container
   docker_container:
     name: whose_turn_is_it_anyway
@@ -55,11 +68,9 @@
     image: whose_turn_is_it_anyway
     ports:
       - "127.0.0.1:5000:5000"
-    env:
-        WHOSE_TURN_IS_IT_ANYWAY_ENV: prod
-        WHOSE_TURN_IS_IT_ANYWAY_SECRET: "{{ lookup('pipe', 'openssl rand -base64 40') }}"
+    env_file: /var/app/config/env
     volumes:
-      - /var/docker:/var/app
+      - /var/app/data:/var/app
   tags:
     - docker
 

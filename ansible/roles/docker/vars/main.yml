@@ -1,0 +1,2 @@
+---
+secret_key: "{{ lookup('pipe', 'openssl rand -base64 40') }}"
