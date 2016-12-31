@@ -54,7 +54,7 @@
       - "127.0.0.1:5000:5000"
     env:
         WHOSE_TURN_IS_IT_ANYWAY_ENV: prod
-        WHOSE_TURN_IS_IT_ANYWAY_SECRET: M0RGdQJLr/alXd3u7+DJ0tYO09ZXWvpEP1aiq4k6k/fIzBBLv3+dnw==
+        WHOSE_TURN_IS_IT_ANYWAY_SECRET: "{{ lookup('pipe', 'openssl rand -base64 40') }}"
     volumes:
       - /var/docker:/var/app
   tags:
