@@ -17,11 +17,11 @@
     - nginx
     - letsencrypt
 
-- name: install linux-headers
-  shell: apt-get install -y linux-headers-$(uname -r)
-  register: header_result
-  failed_when: header_result.rc != 0
-  changed_when: header_result.rc == 0 and ("already the newest version" not in header_result.stdout)
+  #- name: install linux-headers
+  #shell: apt-get install -y linux-headers-$(uname -r)
+  #register: header_result
+  #failed_when: header_result.rc != 0
+  #changed_when: header_result.rc == 0 and ("already the newest version" not in header_result.stdout)
 
 - name: Install docker
   apt: name=docker.io state=present
@@ -70,12 +70,20 @@
       - "127.0.0.1:5000:5000"
     env_file: /var/app/config/env
     volumes:
-      - /var/app/data:/var/app
+      - /var/app/data:/data
+    restart_policy: always
   tags:
     - docker
 
 - name: Configure Nginx
   copy: src=whose_turn_is_it_anyway.sites-available dest=/etc/nginx/sites-available/whose_turn_is_it_anyway owner=www-data group=www-data
+  notify:
+    - restart nginx
+
+- name: Enable site
+  file: src=/etc/nginx/sites-available/whose_turn_is_it_anyway dest=/etc/nginx/sites-enabled/whose_turn_is_it_anyway state=link
+  notify:
+    - restart nginx
 
 - name: Setup automatic certificate renewal with certbot
   cron: name=Certbot special_time=daily job="letsencrypt renew --agree-tos"
