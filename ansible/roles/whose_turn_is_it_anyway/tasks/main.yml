@@ -1,0 +1,41 @@
+---
+- name: Checkout Whose turn is it anyway
+  git: repo=https://github.com/apollux/whose_turn_is_it_anyway.git dest=./whose_turn_is_it_anyway
+
+- name: Build docker image
+  docker_image:
+    path: ./whose_turn_is_it_anyway
+    name: whose_turn_is_it_anyway
+    repository: whose_turn_is_it_anyway
+    state: present
+
+- name: Setup app directory structure
+  file: path=/var/app/{{ item }} state=directory
+  with_items:
+  - app
+  - config
+
+- name: configure docker env
+  template: src=env dest=/var/app/config/ force=no
+
+- name: Start container
+  docker_container:
+    name: whose_turn_is_it_anyway
+    state: started
+    image: whose_turn_is_it_anyway
+    ports:
+     - "127.0.0.1:5000:5000"
+    env_file: /var/app/config/env
+    volumes:
+     - /var/app/data:/data
+    restart_policy: always
+
+- name: Configure Nginx
+  copy: src=whose_turn_is_it_anyway.sites-available dest=/etc/nginx/sites-available/whose_turn_is_it_anyway owner=www-data group=www-data
+  notify:
+   - restart nginx
+
+- name: Enable site
+  file: src=/etc/nginx/sites-available/whose_turn_is_it_anyway dest=/etc/nginx/sites-enabled/whose_turn_is_it_anyway state=link
+  notify:
+   - restart nginx
