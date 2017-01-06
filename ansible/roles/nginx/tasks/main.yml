@@ -1,0 +1,17 @@
+- name: Install Nginx and letsencrypt
+  apt: name={{ item }}  state=present
+  with_items:
+    - nginx
+    - letsencrypt
+
+- name: Setup automatic certificate renewal with certbot
+  cron: name=Certbot special_time=daily job="letsencrypt renew --agree-tos"
+
+- name: config ufw - allow http(s)
+  ufw: rule=allow port={{ item }} proto=tcp
+  notify:
+  - restart ufw
+  with_items:
+  - 80
+  - 443
+

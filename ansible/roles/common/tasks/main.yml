@@ -1,0 +1,23 @@
+---
+- name: apt-get update
+  apt: update_cache=yes
+
+- name: Installing ufw
+  apt: name=ufw state=present
+  notify:
+  - restart ufw
+
+- name: Install deps
+  apt: name={{ item }}  state=present
+  with_items:
+  - apt-transport-https
+  - aptitude
+
+- name: Updating packages
+  apt: upgrade=yes
+
+- name: config ufw - allow ssh
+  ufw: rule=allow port=22 proto=tcp
+  notify:
+  - restart ufw
+
