@@ -1,0 +1,15 @@
+---
+
+- name: Create www-root dir for Tools
+  file: path=/var/www/tools state=directory
+
+- name: Place tracker image in www-root
+  copy: src=tracker.png dest=/var/www/tools/t.png
+
+- name: Configure Nginx
+  copy: src=tools.sites-available dest=/etc/nginx/sites-available/tools
+
+- name: Enable tools in Nginx
+  file: src=/etc/nginx/sites-available/tools dest=/etc/nginx/sites-enabled/tools state=link
+
+
