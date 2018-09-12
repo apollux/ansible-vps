@@ -1,23 +1,44 @@
 ---
-- name: apt-get update
-  apt: update_cache=yes
 
-- name: Installing ufw
-  apt: name=ufw state=present
+- name: Enable Debian backports
+  apt_repository:
+    repo: "deb http://ftp.debian.org/debian jessie-backports main"
+    state: present
+    filename: backports
+    update_cache: yes
+  when: ansible_distribution == 'Debian'
+
+- name: Upgrade system
+  apt:
+    update_cache: yes
+    upgrade: yes
+
+- name: Install common software
+  apt:
+    name: ufw,apt-transport-https,python-pip
+
+- name: Set incoming policy
+  ufw:
+    policy: reject
+    direction: incoming
   notify:
-  - restart ufw
+    - restart ufw
 
-- name: Install deps
-  apt: name={{ item }}  state=present
-  with_items:
-  - apt-transport-https
-  - aptitude
-
-- name: Updating packages
-  apt: upgrade=yes
+- name: Set ougoing policy
+  ufw:
+    policy: allow
+    direction: outgoing
+  notify:
+    - restart ufw
 
 - name: config ufw - allow ssh
-  ufw: rule=allow port=22 proto=tcp
+  ufw:
+    rule: allow
+    name: OpenSSH
   notify:
   - restart ufw
+
+- name: Timezone UTC
+  timezone:
+    name: UTC
 

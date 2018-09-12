@@ -1,6 +1,21 @@
 ---
-- hosts: all
+- hosts: vps
   roles:
-  - whose_turn_is_it_anyway
-  - tools
+  - common
+#  - docker-host
+  - nginx
+# https://github.com/aalaesar/install_nextcloud
+  - role: aalaesar.install_nextcloud
+    nextcloud_trusted_domain:
+      - "cloud.andrekwakernaak.xyz"
+    nextcloud_tls_cert_method: "installed"
+    nextcloud_tls_cert: "/etc/letsencrypt/live/cloud.andrekwakernaak.xyz/fullchain.pem"
+    nextcloud_tls_cert_key: "/etc/letsencrypt/live/cloud.andrekwakernaak.xyz/privkey.pem"
+    nextcloud_mozilla_modern_ssl_profile: true
+    nextcloud_version_channel: "releases"
+    nextcloud_get_latest: true
+    nextcloud_version_major: 13
+    nextcloud_websrv: "nginx"
+    nextcloud_hsts: max-age=631138519
+    nextcloud_admin_name: andre
   remote_user: root

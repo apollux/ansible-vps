@@ -1,17 +1,56 @@
-- name: Install Nginx and letsencrypt
-  apt: name={{ item }}  state=present
-  with_items:
-    - nginx
-    - letsencrypt
+- name: Install certbot to latest version using jessie-backport
+  apt:
+    name: certbot
+    state: present
+    default_release: jessie-backports
+  when: ansible_distribution == 'Debian'
 
-- name: Setup automatic certificate renewal with certbot
-  cron: name=Certbot special_time=daily job="letsencrypt renew --agree-tos"
+- name: Configure auto renew with Certbot
+  cron:
+    name: Certbot
+    special_time: daily
+    job: '/usr/bin/certbot renew --standalone --non-interactive --quiet --pre-hook="service nginx stop" --post-hook="service nginx start"'
+
+- name: Check available certificates
+  shell: certbot certificates --domain cloud.andrekwakernaak.xyz
+  register: available_certs_result
+  changed_when: false
+- set_fact:
+    available_certs: '{{ available_certs_result.stdout | regex_findall("Domains\:\s([a-zA-Z0-9.]+)\s", multiline=True)}}'
+
+- name: Retrieve certificate
+  shell: 'certbot certonly --domain {{ nextcloud_fqdn }} --standalone -n --agree-tos --email {{ report_email }} --pre-hook="service nginx stop || true" --post-hook="service nginx start || true"'
+  when: nextcloud_fqdn not in available_certs
+  register: certbot_request_result
+  changed_when: "certbot_request_result.stdout.find('Congratulations') != -1"
+
+#- name: Generate Diffie Hellman Parameters - Takes some time...
+#  openssl_dhparam:
+#    path: /etc/ssl/dhparams.pem
+#    size: 4096
+#
+#- name: Configure Nextcloud in Nginx
+#  copy: src=redirect-to-https.sites-available dest=/etc/nginx/sites-available/redirect-to-https
+#  notify:
+#  - restart nginx
+#- file: src=/etc/nginx/sites-available/redirect-to-https dest=/etc/nginx/sites-enabled/redirect-to-https state=link
+#  notify:
+#  - restart nginx
+#
+#- name: Install shared config
+#  copy:
+#    src: snippets
+#    dest: /etc/nginx/
+#  notify:
+#    - restart nginx
 
 - name: config ufw - allow http(s)
-  ufw: rule=allow port={{ item }} proto=tcp
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
   notify:
   - restart ufw
   with_items:
-  - 80
-  - 443
-
+    - 80
+    - 443

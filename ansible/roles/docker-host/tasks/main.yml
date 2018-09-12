@@ -1,0 +1,16 @@
+---
+- name: Add docker repo key
+  apt_key: url=https://download.docker.com/linux/debian/gpg state=present 
+
+- apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable"
+    state: present
+    filename: docker
+    update_cache: yes
+
+- name: Installing Docker CE
+  apt:
+    name: docker-ce
+
+- name: Installing Python depencies
+  pip: name=docker,docker-compose
